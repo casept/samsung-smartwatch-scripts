@@ -1,0 +1,21 @@
+layout {
+	pane split_direction="vertical" {
+        pane command="arm-none-eabi-gdb" {
+            args "-tui"
+            start_suspended true
+        }
+        pane split_direction="horizontal" {
+            pane command="telnet" {
+                args "localhost 4440"
+                start_suspended true
+            }
+            pane command="sudo" {
+        		args "agent-proxy 4440^4441 /dev/ttyUSB0,115200"
+        		start_suspended true
+        	}
+        }
+    }
+    pane size=1 borderless=true {
+        plugin location="zellij:compact-bar"
+    }
+}
