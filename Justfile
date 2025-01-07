@@ -5,7 +5,7 @@ default:
 
 # Flash a kernel
 @flash kernel:
-	heimdall-grimler flash --BOOT {{kernel}}
+	heimdall flash --BOOT {{kernel}}
 
 # Build the downstream kernel in a container
 build-downstream:
