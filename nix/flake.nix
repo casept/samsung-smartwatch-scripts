@@ -18,7 +18,27 @@
             inherit system;
           };
           downstreamKernelInputs = [ rinato-kernel-build.packages.${system}.default pkgs.bash pkgs.gnumake pkgs.ncurses ];
-          kernelInputs = [ pkgs.gcc-arm-embedded-13 pkgs.gdb pkgs.gnumake pkgs.ncurses pkgs.flex pkgs.bison pkgs.bc pkgs.openssl pkgs.gcc pkgs.zlib pkgs.elfutils ];
+          # Add ccache wrapper to GCC
+          cachedArmGcc =
+            (pkgs.gcc-arm-embedded-13.overrideAttrs (final: previous: {
+              postFixup = previous.postFixup + ''
+                mv $out/bin/arm-none-eabi-gcc $out/bin/arm-none-eabi-gcc-unwrapped
+                ln -s ${pkgs.ccache}/bin/ccache $out/bin/arm-none-eabi-gcc
+              '';
+            }));
+          kernelInputs = [
+            cachedArmGcc
+            pkgs.gdb
+            pkgs.gnumake
+            pkgs.ncurses
+            pkgs.flex
+            pkgs.bison
+            pkgs.bc
+            pkgs.openssl
+            pkgs.gcc
+            pkgs.zlib
+            pkgs.elfutils
+          ];
           toolingInputs = [ pkgs.usbutils pkgs.just pkgs.python3 pkgs.zellij (pkgs.callPackage ./heimdall.nix { }) (pkgs.callPackage ./sboot_upload.nix { }) pkgs.dtc pkgs.tio ];
         in
         with pkgs;
@@ -144,3 +164,4 @@
         }
       );
 }
+
