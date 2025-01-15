@@ -2,7 +2,7 @@
   description = "Dev env for AsteroidOS rinato port";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-24.11";
     flake-utils.url = "github:numtide/flake-utils";
     rinato-kernel-build = {
       url = "github:casept/rinato-kernel-build";
