@@ -43,7 +43,7 @@ build-mainline:
 	# Fails for production kernel without GDB enabled, ignore that
 	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) scripts_gdb || true
 
-	DTB="exynos3250-rinato.dts"
+	DTB="exynos3250-rinato.dtb"
 	# S-Boot is too old to support device tree, use concat dtree
 	cat arch/arm/boot/zImage "arch/arm/boot/dts/samsung/$DTB" > "../zImage-with-dtree"
 	popd
