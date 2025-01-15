@@ -12,7 +12,7 @@ rm -rf "$SCRIPT_PATH/../mainline-modules/lib/modules/"
 mkdir "$SCRIPT_PATH/../mainline-modules/lib/modules/"
 
 echo "Building modules..."
-pushd "$SCRIPT_PATH/../linux-mainline"
+pushd "$SCRIPT_PATH/../linux-samsung-smartwatch"
 make ARCH=arm INSTALL_MOD_PATH="$SCRIPT_PATH/../mainline-modules" CROSS_COMPILE=arm-none-eabi- -j$(nproc) modules_install
 
 echo "Removing old modules..."
