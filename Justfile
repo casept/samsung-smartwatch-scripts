@@ -122,3 +122,16 @@ decomp-fpga:
 # Launch a GDB session for debugging the kernel via UART cable
 debug:
 	zellij -c kgdb.kdl
+
+# Dump bootloader logs to bootloader.log
+dump-bootloader-logs:
+    samupload range 0x46000000 0x46200000
+    mv range.bin bootloader.log
+    # Clean out non-printable garbage memory
+    perl -pi -e 's/[^[:ascii:]]//g' bootloader.log
+    cat bootloader.log
+
+# Dump kernel pstore to pstore.bin
+dump-pstore:
+    samupload range 0x51000000 0x51100000
+    mv range.bin pstore.bin
