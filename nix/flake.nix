@@ -44,6 +44,7 @@
             pkgs.gcc
             pkgs.zlib
             pkgs.elfutils
+            pkgs.dt-schema
           ];
           toolingInputs = [ pkgs.usbutils pkgs.just pkgs.python3 pkgs.zellij (pkgs.callPackage ./heimdall.nix { }) (pkgs.callPackage ./sboot_upload.nix { }) pkgs.dtc pkgs.tio ];
         in
