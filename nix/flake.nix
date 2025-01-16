@@ -21,9 +21,15 @@
           # Add ccache wrapper to GCC
           cachedArmGcc =
             (pkgs.gcc-arm-embedded-13.overrideAttrs (final: previous: {
+              buildInputs = [ pkgs.bash pkgs.coreutils pkgs.ccache ];
               postFixup = previous.postFixup + ''
                 mv $out/bin/arm-none-eabi-gcc $out/bin/arm-none-eabi-gcc-unwrapped
-                ln -s ${pkgs.ccache}/bin/ccache $out/bin/arm-none-eabi-gcc
+                cat <<'_EOF' >"$out/bin/arm-none-eabi-gcc"
+                #!${pkgs.bash}/bin/bash -e
+                path=$(${pkgs.coreutils}/bin/dirname "$0")
+                exec ${pkgs.ccache}/bin/ccache "$path/arm-none-eabi-gcc-unwrapped" "$@"
+                _EOF
+                chmod 0755 "$out/bin/arm-none-eabi-gcc"
               '';
             }));
           kernelInputs = [
