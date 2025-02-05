@@ -51,6 +51,7 @@
             pkgs.python3Packages.gitpython
           ];
           toolingInputs = [ pkgs.usbutils pkgs.just pkgs.zellij (pkgs.callPackage ./heimdall.nix { }) (pkgs.callPackage ./sboot_upload.nix { }) pkgs.dtc pkgs.tio ];
+          downstreamUBootInputs = [ pkgs.gcc-arm-embedded-6 pkgs.bash pkgs.gcc pkgs.gnumake ];
         in
         with pkgs;
         {
@@ -61,6 +62,12 @@
           devShells.downstream = (buildFHSUserEnv {
             name = "dowstream-fhs";
             targetPkgs = pkgs: downstreamKernelInputs;
+          }).env;
+
+          # Dowstream u-boot requires ancient toolchain and harcodes e.g. /bin/bash
+          devShells.downstream-uboot = (buildFHSUserEnv {
+            name = "dowstream-uboot-fhs";
+            targetPkgs = pkgs: downstreamUBootInputs;
           }).env;
 
           # Yocto has special needs
