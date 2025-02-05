@@ -36,6 +36,7 @@ build-mainline:
 
 	# Build
 	pushd "linux-samsung-smartwatch"
+	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) vmlinux
 	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) zImage
 	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) modules
 	make ARCH=arm INSTALL_MOD_PATH="mainline-modules" CROSS_COMPILE=arm-none-eabi- -j$(nproc) modules_install
