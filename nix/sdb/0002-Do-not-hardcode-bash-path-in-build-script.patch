@@ -1,0 +1,22 @@
+From b56e1966fecd802ca128c52a7d7a807dca810cad Mon Sep 17 00:00:00 2001
+From: casept <davids.paskevics@gmail.com>
+Date: Sat, 8 Feb 2025 22:56:24 +0100
+Subject: [PATCH 2/2] Do not hardcode bash path in build script
+
+---
+ package/build.linux | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package/build.linux b/package/build.linux
+index 800284f..f70349e 100755
+--- a/package/build.linux
++++ b/package/build.linux
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/usr/bin/env bash
+ # clean
+ clean()
+ {
+-- 
+2.47.1
+

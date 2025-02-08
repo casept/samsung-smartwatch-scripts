@@ -1,0 +1,55 @@
+From b745c514f39ea4ed3eed8db956049fd1f3750314 Mon Sep 17 00:00:00 2001
+From: casept <davids.paskevics@gmail.com>
+Date: Sat, 8 Feb 2025 22:56:00 +0100
+Subject: [PATCH 1/2] Fix build of SDB client
+
+---
+ Makefile | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 43f6483..86a3c19 100644
+--- a/Makefile
++++ b/Makefile
+@@ -57,7 +57,8 @@ SDB_SRC_FILES := \
+ SDB_CFLAGS := -O2 -g -DSDB_HOST=1  -Wall -Wno-unused-parameter
+ SDB_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
+ SDB_CFLAGS += -DHAVE_FORKEXEC -DHAVE_TERMIO_H -DHAVE_SYMLINKS
+-SDB_LFLAGS := $(LOCAL_LDLIBS)
++SDB_CFLAGS += -fcommon -Wl,--allow-multiple-definition
++SDB_LFLAGS := -Wl,--allow-multiple-definition $(LOCAL_LDLIBS)
+ 
+ SDBD_SRC_FILES := \
+ 	src/sdb.c \
+@@ -78,11 +79,12 @@ SDBD_SRC_FILES := \
+ 	src/socket_local_server.c \
+ 	src/socket_loopback_client.c \
+ 	src/socket_loopback_server.c \
+-	src/socket_network_client.c 
++	src/socket_network_client.c
+ 
+ SDBD_CFLAGS := -O2 -g -DSDB_HOST=0 -Wall -Wno-unused-parameter
+ SDBD_CFLAGS += -D_XOPEN_SOURCE -D_GNU_SOURCE
+ SDBD_CFLAGS += -DHAVE_FORKEXEC -fPIE
++SDBD_CFLAGS += -fcommon -Wl,--allow-multiple-definition
+ 
+ IFLAGS := -Iinclude -Isrc
+ OBJDIR := bin
+@@ -101,14 +103,8 @@ ifeq ($(TARGET_ARCH),)
+ endif
+ 
+ ifeq ($(TARGET_ARCH),arm)
+-	MODULE := sdbd
+ 	SDBD_CFLAGS += -DANDROID_GADGET=1
+ else
+-ifeq ($(TARGET_HOST),true)
+-	MODULE := sdb
+-else
+-	MODULE := sdbd
+-endif
+ endif
+ 
+ all : $(MODULE)
+-- 
+2.47.1
+
