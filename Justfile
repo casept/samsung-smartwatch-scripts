@@ -54,7 +54,7 @@ build-mainline:
 
 # Build and flash the mainline kernel (via download mode)
 mainline-download: build-mainline
-	heimdall-grimler flash --BOOT ./zImage-with-dtree
+	heimdall flash --BOOT ./zImage-with-dtree
 
 # Build and flash the mainline kernel (via SSH to a booted system)
 mainline-flash: build-mainline
