@@ -43,6 +43,9 @@
             pkgs.openssl
             pkgs.gcc
             pkgs.zlib
+            pkgs.gmp
+            pkgs.mpc
+            pkgs.gnutls
             pkgs.elfutils
             pkgs.dt-schema
             pkgs.perl
