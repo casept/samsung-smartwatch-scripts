@@ -50,7 +50,17 @@
             pkgs.python3Packages.ply
             pkgs.python3Packages.gitpython
           ];
-          toolingInputs = [ pkgs.usbutils pkgs.just pkgs.zellij (pkgs.callPackage ./heimdall.nix { }) (pkgs.callPackage ./sboot_upload.nix { }) (pkgs.callPackage ./sdb { }) pkgs.dtc pkgs.tio ];
+          toolingInputs = with pkgs; [
+            usbutils
+            just
+            zellij
+            (callPackage ./heimdall.nix { })
+            (callPackage ./sboot_upload.nix { })
+            (callPackage ./sdb { })
+            dtc
+            tio
+            expect
+          ];
           downstreamUBootInputs = [ pkgs.gcc-arm-embedded-6 pkgs.bash pkgs.gcc pkgs.gnumake ];
         in
         with pkgs;
