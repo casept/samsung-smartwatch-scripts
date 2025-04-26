@@ -32,7 +32,7 @@
                 chmod 0755 "$out/bin/arm-none-eabi-gcc"
               '';
             }));
-          kernelInputs = [
+          kernelAndUBootInputs = [
             cachedArmGcc
             pkgs.gdb
             pkgs.gnumake
@@ -63,13 +63,14 @@
             dtc
             tio
             expect
+            bear
           ];
           downstreamUBootInputs = [ pkgs.gcc-arm-embedded-6 pkgs.bash pkgs.gcc pkgs.gnumake ];
         in
         with pkgs;
         {
           devShells.default = mkShell {
-            buildInputs = kernelInputs ++ toolingInputs;
+            buildInputs = kernelAndUBootInputs ++ toolingInputs;
           };
           # Dowstream kernel requires ancient toolchain and harcodes e.g. /bin/bash
           devShells.downstream = (buildFHSUserEnv {
