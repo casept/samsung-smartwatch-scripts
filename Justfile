@@ -72,21 +72,21 @@ stock-flash:
 
 # Provide a route to the Internet for the watch
 internet:
-	./internet.sh
-		
+	./scripts/internet.sh
+
 # Install kernel modules for the currently-built mainline kernel onto the watch
-	./update-modules.sh
 mainline-update-modules:
+	./scripts/update-modules.sh
 
 # Assign an IP address to the watch when running Debian
 ip-debian:
 	#!/usr/bin/env bash
-	while true; do sudo ifconfig usb0 192.168.0.101 netmask 255.255.255.0; sleep 5; done
+	while true; do sudo ifconfig enp7s0f3u2 192.168.0.101 netmask 255.255.255.0; sleep 5; done
 
 # Assign an IP address to the watch when running AsteroidOS (non-standard IP to avoid conflict with home network)
 ip-asteroid:
 	#!/usr/bin/env bash
-	while true; do sudo ifconfig enp7s0f4u2 192.168.3.15 netmask 255.255.255.0; sleep 5; done
+	while true; do sudo ifconfig enp7s0f4u2 192.168.3.14 netmask 255.255.255.0; sleep 5; done
 
 # Expose a watch running AsteroidOS to the remote build server
 expose-asteroid:
