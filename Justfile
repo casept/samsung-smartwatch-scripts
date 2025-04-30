@@ -136,3 +136,7 @@ dump-bootloader-logs:
 dump-pstore:
     samupload range 0x51000000 0x51100000
     mv range.bin pstore.bin
+
+# Upload U-Boot to ARTIK5's RAM and execute it
+uboot-artik:
+	./artik5-boot-u-boot.exp

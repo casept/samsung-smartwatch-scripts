@@ -26,4 +26,4 @@ expect "ARTIK5 #"
 # Jump to default load address
 send -- "go 0x43E00000\r"
 
-expect eof
+interact
