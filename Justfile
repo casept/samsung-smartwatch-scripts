@@ -8,7 +8,7 @@ default:
 	heimdall flash --BOOT {{kernel}}
 
 # Build the downstream kernel in a container
-build-downstream:
+downstream-build:
 	#!/usr/bin/env bash
 	set -exo pipefail
 	docker run --entrypoint "/bin/bash"  \
@@ -17,17 +17,17 @@ build-downstream:
 	cp "linux-exynos3250-common/arch/arm/boot/zImage" "zImage-downstream"
 
 # Get a shell into an environment suitable for building or configuring the downstream kernel
-edit-downstream:
+downstream-edit:
 	#!/usr/bin/env bash
 	set -exo pipefail
 	docker run --entrypoint /bin/bash \
 	-v $(pwd)/linux-exynos3250-common:/src --rm -it docker.io/casept/rinato-downstream-build
 
 # Build and flash the downstream kernel
-downstream: build-downstream (flash "zImage-downstream")
+downstream-download: downstream-build (flash "zImage-downstream")
 
 # Build the mainline kernel
-build-mainline:
+mainline-build:
 	#!/usr/bin/env bash
 	set -eo pipefail
 
@@ -53,21 +53,21 @@ build-mainline:
 	unlink "mainline-modules/*/build" || true
 
 # Build and flash the mainline kernel (via download mode)
-mainline-download: build-mainline
+mainline-download: mainline-build
 	heimdall flash --BOOT ./zImage-with-dtree
 
 # Build and flash the mainline kernel (via SSH to a booted system)
-mainline-flash: build-mainline
+mainline-flash: mainline-build
 	# DANGER: Getting this wrong may lead to a wiped bootloader and brick!
 	scp ./zImage-with-dtree root@rinato:/dev/mmcblk0p5
 	ssh root@rinato reboot
 
 # Decode a stracktrace from the mainline kernel
-decode-stacktrace-mainline path:
+mainline-decode-stacktrace path:
 	./decode-stacktrace-mainline.sh {{path}}
 
 # Flash the unmodified stock kernel binary
-flash-stock:
+stock-flash:
 	./flash-stock.sh
 
 # Provide a route to the Internet for the watch
@@ -75,8 +75,8 @@ internet:
 	./internet.sh
 		
 # Install kernel modules for the currently-built mainline kernel onto the watch
-update-modules:
 	./update-modules.sh
+mainline-update-modules:
 
 # Assign an IP address to the watch when running Debian
 ip-debian:
