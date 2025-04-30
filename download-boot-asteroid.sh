@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-SCRIPT_PATH=$(dirname $(realpath -s $0))
+SCRIPT_PATH=$(dirname "$(realpath -s $0)")
 
-BUILDDIR="/home/casept/build/asteroid/build/tmp-glibc/deploy/images/rinato"
+BUILDSERVER="vm-build-big"
+BUILDDIR="/build/asteroid/build/tmp-glibc/deploy/images/rinato"
 BOOTIMG="$SCRIPT_PATH/../zImage-asteroid"
 ROOTIMG="$SCRIPT_PATH/../rootfs-asteroid.img"
 
@@ -16,7 +17,7 @@ rsync -zaPL "$BUILDSERVER:$BUILDDIR/asteroid-image-rinato.rootfs.ext4" "$ROOTIMG
 
 # Flash (via Heimdall)
 echo "Flashing kernel..."
-heimdall-grimler flash --no-reboot --BOOT "$BOOTIMG"
+heimdall flash --no-reboot --BOOT "$BOOTIMG"
 echo "Flashing rootfs..."
-heimdall-grimler flash --resume --USER "$ROOTIMG"
+heimdall flash --resume --USER "$ROOTIMG"
 echo "Done!"
