@@ -3,10 +3,17 @@
 # Script for automatically uploading to RAM and booting u-boot on Artik 5.
 # Board must be reset after starting the script for it to run.
 
+set filename [lindex $argv 0]
+if { ${filename} == "" } {
+	[exit 1]
+}
+
 set timeout 240
 spawn tio /dev/ttyUSB0
 
-# TODO: Check whether board is already in U-Boot
+# Try resetting the board, in case it's already in U-Boot
+sleep 1
+send -- "reset\r"
 
 # Stop autoboot and wait for usable prompt
 expect "Hit any key to stop autoboot:"
@@ -19,11 +26,12 @@ sleep .5
 # Note that the line below does not contain a space, but ctrl-e encoded!
 send -- "y"
 expect "Enter file name:"
-send -- "u-boot.bin\r"
+send -- "${filename}\r"
 expect "Done"
 expect "ARTIK5 #"
 
 # Jump to default load address
 send -- "go 0x43E00000\r"
 
+# Give the user an interactive U-Boot shell
 interact

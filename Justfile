@@ -131,6 +131,18 @@ dump-pstore:
     samupload range 0x51000000 0x51100000
     mv range.bin pstore.bin
 
-# Upload U-Boot to ARTIK5's RAM and execute it
-uboot-artik:
-	./artik5-boot-u-boot.exp
+# Build mainline U-Boot for Artik5
+mainline-uboot-artik-build:
+	cd u-boot-samsung-smartwatch && make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc)
+
+# Build downstream U-Boot for Artik5
+downstream-uboot-artik-build:
+	cd u-boot-artik && make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc)
+
+# Upload mainline U-Boot to ARTIK5's RAM and execute it
+mainline-uboot-artik: mainline-uboot-artik-build
+	./scripts/artik5-boot-u-boot.exp ./u-boot-samsung-smartwatch/u-boot.bin
+
+# Upload downstream U-Boot to ARTIK5's RAM and execute it
+downstream-uboot-artik: downstream-uboot-artik-build
+	./scripts/artik5-boot-u-boot.exp ./u-boot-artik/u-boot.bin
