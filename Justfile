@@ -97,12 +97,6 @@ expose-asteroid:
 @test-module path name:
 	./test-module.sh {{path}} {{name}}
 
-# Test the bluetooth driver
-test-bt: (test-module "drivers/bluetooth/hci_uart.ko" "hci_uart")
-
-# Test the Wi-Fi driver
-test-wifi: (test-module "drivers/net/wireless/broadcom/brcm80211/brcmfmac/brcmfmac.ko" "brcmfmac")
-
 # Test the display panel driver
 test-panel: (test-module "drivers/gpu/drm/panel/panel-samsung-s6e63j0x03.ko" "panel-samsung-s6e63j0x03")
 
