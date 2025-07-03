@@ -2,7 +2,7 @@
   description = "Dev env for AsteroidOS rinato port";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     rinato-kernel-build = {
       url = "github:casept/rinato-kernel-build";
@@ -20,9 +20,9 @@
           downstreamKernelInputs = [ rinato-kernel-build.packages.${system}.default pkgs.bash pkgs.gnumake pkgs.ncurses ];
           # Add ccache wrapper to GCC
           cachedArmGcc =
-            (pkgs.gcc-arm-embedded-13.overrideAttrs (final: previous: {
+            (pkgs.gcc-arm-embedded.overrideAttrs (final: previous: {
               buildInputs = [ pkgs.bash pkgs.coreutils pkgs.ccache ];
-              postFixup = previous.postFixup + ''
+              postFixup = ''
                 mv $out/bin/arm-none-eabi-gcc $out/bin/arm-none-eabi-gcc-unwrapped
                 cat <<'_EOF' >"$out/bin/arm-none-eabi-gcc"
                 #!${pkgs.bash}/bin/bash -e
@@ -48,6 +48,7 @@
             pkgs.gnutls
             pkgs.elfutils
             pkgs.dt-schema
+            pkgs.dtc
             pkgs.perl
             pkgs.python3
             pkgs.python3Packages.ply
@@ -60,12 +61,11 @@
             (callPackage ./heimdall.nix { })
             (callPackage ./sboot_upload.nix { })
             (callPackage ./sdb { })
-            dtc
             tio
             expect
             bear
           ];
-          downstreamUBootInputs = [ pkgs.gcc-arm-embedded-6 pkgs.bash pkgs.gcc pkgs.gnumake ];
+          downstreamUBootInputs = [ rinato-kernel-build.packages.${system}.default pkgs.bash pkgs.gcc pkgs.gnumake ];
         in
         with pkgs;
         {
@@ -73,19 +73,19 @@
             buildInputs = kernelAndUBootInputs ++ toolingInputs;
           };
           # Dowstream kernel requires ancient toolchain and harcodes e.g. /bin/bash
-          devShells.downstream = (buildFHSUserEnv {
+          devShells.downstream = (buildFHSEnv {
             name = "dowstream-fhs";
-            targetPkgs = pkgs: downstreamKernelInputs;
+            targetPkgs = pkgs: downstreamKernelInputs ++ toolingInputs;
           }).env;
 
           # Dowstream u-boot requires ancient toolchain and harcodes e.g. /bin/bash
-          devShells.downstream-uboot = (buildFHSUserEnv {
+          devShells.downstream-uboot = (buildFHSEnv {
             name = "dowstream-uboot-fhs";
-            targetPkgs = pkgs: downstreamUBootInputs;
+            targetPkgs = pkgs: downstreamUBootInputs ++ toolingInputs;
           }).env;
 
           # Yocto has special needs
-          devShells.asteroid = (buildFHSUserEnv {
+          devShells.asteroid = (buildFHSEnv {
             name = "asteroid-fhs";
             targetPkgs =
               let
@@ -115,7 +115,7 @@
                 lz4
                 # https://github.com/NixOS/nixpkgs/issues/218534
                 # postFixup would create symlinks for the non-unicode version but since it breaks
-                # in buildFHSUserEnv, we just install both variants
+                # in buildFHSEnv, we just install both variants
                 ncurses'
                 (ncurses'.override { unicodeSupport = false; })
                 patch
