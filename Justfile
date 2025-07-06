@@ -23,16 +23,13 @@ downstream-edit:
 	docker run --entrypoint /bin/bash \
 	-v $(pwd)/linux-exynos3250-common:/src --rm -it docker.io/casept/rinato-downstream-build
 
-# Build and flash the downstream kernel
+# Build and flash the downstream kernel for Rinato
 downstream-download: downstream-build (flash "zImage-downstream")
 
-# Build the mainline kernel
+# Build the mainline kernel for Rinato
 mainline-build:
 	#!/usr/bin/env bash
 	set -eo pipefail
-
-	# Add toolchain to PATH
-	export PATH="$PATH:$(pwd)/../toolchain-mainline/bin"
 
 	# Build
 	pushd "linux-samsung-smartwatch"
@@ -55,6 +52,34 @@ mainline-build:
 # Build and flash the mainline kernel (via download mode)
 mainline-download: mainline-build
 	heimdall flash --BOOT ./zImage-with-dtree
+
+# Build the mainline kernel for Artik5 eval
+mainline-build-artik:
+	#!/usr/bin/env bash
+	set -eo pipefail
+
+	# Build
+	pushd "linux-samsung-smartwatch"
+	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) vmlinux
+	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) zImage
+	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) modules
+	make ARCH=arm INSTALL_MOD_PATH="mainline-modules" CROSS_COMPILE=arm-none-eabi- -j$(nproc) modules_install
+	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) dtbs
+	# Fails for production kernel without GDB enabled, ignore that
+	make ARCH=arm CROSS_COMPILE=arm-none-eabi- -j$(nproc) scripts_gdb || true
+
+	DTB="exynos3250-artik5-eval.dtb"
+	# U-Boot is too old to support device tree in boot.img, use concat dtree
+	cat arch/arm/boot/zImage "arch/arm/boot/dts/samsung/$DTB" > "../zImage-with-dtree-artik"
+	popd
+	mkbootimg --os_version 4 --kernel zImage-with-dtree-artik -o bootimg-artik.img
+
+	# Remove non-transferable symlink from kernel modules dir
+	unlink "mainline-modules/*/build" || true
+
+# Build and flash the mainline kernel (via download mode)
+mainline-download-artik: mainline-build-artik
+	fastboot boot bootimg-artik.img
 
 # Build and flash the mainline kernel (via SSH to a booted system)
 mainline-flash: mainline-build
