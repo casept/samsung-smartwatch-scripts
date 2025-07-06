@@ -61,6 +61,7 @@
             (callPackage ./heimdall.nix { })
             (callPackage ./sboot_upload.nix { })
             (callPackage ./sdb { })
+            (callPackage ./agent-proxy.nix { })
             tio
             expect
             bear
