@@ -6,9 +6,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-# Add toolchain to PATH
-export PATH="$PATH:$(pwd)/../toolchain-mainline/bin"
 OBJDUMP=arm-none-eabi-objdump
 
 # Decode oops
-"$(pwd)/linux-mainline/scripts/decode_stacktrace.sh" "$(pwd)/linux-mainline/vmlinux" "$(pwd)/linux-mainline" "$(pwd)" < "$1"
+"$(pwd)/linux-samsung-smartwatch/scripts/decode_stacktrace.sh" "$(pwd)/linux-samsung-smartwatch/vmlinux" "$(pwd)/linux-samsung-smartwatch" "$(pwd)" < "$1"
