@@ -4,6 +4,7 @@
 , cmake
 , zlib
 , libusb1
+, pkg-config
 , enableGUI ? false
 , qtbase ? null
 }:
@@ -15,15 +16,15 @@ stdenv.mkDerivation {
   src = fetchFromSourcehut {
     owner = "~grimler";
     repo = "Heimdall";
-    rev = "1afaefb3fd5e03614e7810388d335f88c75ac3f6";
-    sha256 = "sha256-DiHaht+gZ8Ot6hMbY8BtNaNnsgalkX5tcJ8Fe6WYtyk=";
+    rev = "d9554e7fa30a00abed7f0ac86b10e63c2c3b8e20";
+    sha256 = "sha256-ga2hAZhsKosEG//qXEf+1vhJYtsHwyq6QvMlZaSFIgQ=";
   };
 
   buildInputs = [
     zlib
     libusb1
   ] ++ lib.optional enableGUI qtbase;
-  nativeBuildInputs = [ cmake ];
+  nativeBuildInputs = [ cmake pkg-config ];
 
   cmakeFlags = [
     "-DDISABLE_FRONTEND=${if enableGUI then "OFF" else "ON"}"
