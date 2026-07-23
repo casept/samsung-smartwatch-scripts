@@ -1,0 +1,111 @@
+#!/usr/bin/env expect
+
+# Script for controlling rinato wired up to Pi Pico board via patched dirtyjtag.
+# GPIO1 is wired up to the power button.
+# TODO: Implement power control via GPIO0 in HW
+
+set cmd [lindex $argv 0]
+if { ${cmd} != "on" && ${cmd} != "off" && ${cmd} != "download" && ${cmd} != "upload" } {
+    puts stderr "Usage: $argv0 on|off|download|upload"
+    exit 1
+}
+
+proc poweron {} {
+    send -- "gpiopulse,1,5000\r"
+    expect "dirtyjtag> "
+    sleep 5
+}
+
+proc power_cycle {} {
+    send -- "gpiopulse,1,10000\r"
+    expect "dirtyjtag> "
+    sleep 11
+}
+
+proc short_press {} {
+    send -- "gpiopulse,1,250\r"
+    expect "dirtyjtag> "
+    after 500
+}
+
+proc long_press {} {
+    send -- "gpiopulse,1,1000\r"
+    expect "dirtyjtag> "
+    after 1500
+}
+
+proc enter_reboot_menu {} {
+    power_cycle
+
+    # Now in "Rebooting..." state, 3 presses to enter menu
+    short_press
+    short_press
+    short_press
+}
+
+proc menu_down {} {
+    short_press
+}
+
+proc upload {} {
+    enter_reboot_menu
+    sleep 1
+
+    # Navigate to "upload" menu entry
+    menu_down
+
+    # And select it
+    long_press
+}
+
+proc download {} {
+    enter_reboot_menu
+    sleep 1
+
+    # Navigate to "download" menu entry
+    menu_down
+    menu_down
+
+    # And select it
+    long_press
+}
+
+proc poweroff {} {
+    enter_reboot_menu
+    sleep 1
+
+    # Navigate to "poweroff" menu entry
+    menu_down
+    menu_down
+    menu_down
+    menu_down
+
+    # And select it
+    long_press
+}
+
+set timeout 20
+# TODO: Discover
+spawn tio /dev/ttyACM2
+
+# Flush
+send -- "\r\n"
+expect "dirtyjtag> "
+send -- "\r\n"
+
+if { ${cmd} == "on" } {
+    poweron
+    exit 0
+}
+if { ${cmd} == "off" } {
+    poweroff
+    exit 0
+}
+if { ${cmd} == "download" } {
+    download
+    exit 0
+}
+if { ${cmd} == "upload" } {
+    upload
+    exit 0
+}
