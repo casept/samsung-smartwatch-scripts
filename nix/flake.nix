@@ -37,6 +37,7 @@
             pkgs.gdb
             pkgs.gnumake
             pkgs.ncurses
+            pkgs.pkg-config
             pkgs.flex
             pkgs.bison
             pkgs.bc
