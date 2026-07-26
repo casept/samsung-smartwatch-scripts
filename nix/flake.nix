@@ -63,6 +63,7 @@
             (callPackage ./sboot_upload.nix { })
             (callPackage ./sdb { })
             (callPackage ./agent-proxy.nix { })
+            (callPackage ./allyourbase.nix { })
             tio
             expect
             bear
