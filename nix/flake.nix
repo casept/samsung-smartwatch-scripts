@@ -18,6 +18,15 @@
             inherit system;
           };
           downstreamKernelInputs = [ rinato-kernel-build.packages.${system}.default pkgs.bash pkgs.gnumake pkgs.ncurses ];
+          # dtschema >= 2026.09 declares its libfdt bindings under the PyPI dist
+          # name "pylibfdt", but nixpkgs ships them as "libfdt" (dtschema imports
+          # the "libfdt" module either way). Drop the misnamed requirement from
+          # the wheel metadata so the runtime-deps check passes.
+          patchedDtSchema = with pkgs.python3Packages;
+            toPythonApplication (dtschema.overrideAttrs (old: {
+              nativeBuildInputs = old.nativeBuildInputs ++ [ pythonRelaxDepsHook ];
+              pythonRemoveDeps = [ "pylibfdt" ];
+            }));
           # Add ccache wrapper to GCC
           cachedArmGcc =
             (pkgs.gcc-arm-embedded.overrideAttrs (final: previous: {
@@ -48,7 +57,7 @@
             pkgs.mpc
             pkgs.gnutls
             pkgs.elfutils
-            pkgs.dt-schema
+            patchedDtSchema
             pkgs.dtc
             pkgs.perl
             pkgs.python3
@@ -59,7 +68,7 @@
             usbutils
             just
             zellij
-            (callPackage ./heimdall.nix { })
+            heimdall
             (callPackage ./sboot_upload.nix { })
             (callPackage ./sdb { })
             (callPackage ./agent-proxy.nix { })
