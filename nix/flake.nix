@@ -59,6 +59,7 @@
             pkgs.elfutils
             patchedDtSchema
             pkgs.dtc
+            pkgs.pahole
             pkgs.perl
             pkgs.python3
             pkgs.python3Packages.ply
