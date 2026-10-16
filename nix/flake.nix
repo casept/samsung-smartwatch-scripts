@@ -65,6 +65,7 @@
             pkgs.python3Packages.gitpython
           ];
           toolingInputs = with pkgs; [
+            debootstrap
             usbutils
             just
             zellij

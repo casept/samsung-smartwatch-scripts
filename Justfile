@@ -166,3 +166,28 @@ mainline-uboot-artik: mainline-uboot-artik-build
 # Upload downstream U-Boot to ARTIK5's RAM and execute it
 downstream-uboot-artik: downstream-uboot-artik-build
 	./scripts/artik5-boot-u-boot.exp ./u-boot-artik/u-boot.bin
+
+# Debootstrap Debian and pack it into an ext4 image for the userdata partition
+debian:
+	#!/usr/bin/env bash
+	set -exo pipefail
+	ROOTFS="debian-rootfs"
+	trap 'sudo rm -rf "$ROOTFS"' EXIT
+	sudo rm -rf "$ROOTFS"
+
+	# qemu-arm-static must be registered with binfmt_misc (F flag) for the second stage to run in the chroot
+	sudo "$(command -v debootstrap)" --arch=armhf --include=openssh-server \
+		trixie "$ROOTFS" http://deb.debian.org/debian
+
+	echo "root:root" | sudo chroot "$ROOTFS" chpasswd
+	echo "PermitRootLogin yes" | sudo tee "$ROOTFS/etc/ssh/sshd_config.d/root-login.conf" >/dev/null
+	echo "rinato" | sudo tee "$ROOTFS/etc/hostname" >/dev/null
+	echo "LABEL=debian / ext4 errors=remount-ro 0 1" | sudo tee "$ROOTFS/etc/fstab" >/dev/null
+	echo "nameserver 1.1.1.1" | sudo tee "$ROOTFS/etc/resolv.conf" >/dev/null
+	sudo chroot "$ROOTFS" apt-get clean
+
+	rm -f debian.img
+	truncate -s 2G debian.img
+	# Run as root so mkfs.ext4 -d preserves file ownership from the rootfs
+	sudo mkfs.ext4 -F -L debian -d "$ROOTFS" debian.img
+	sudo chown "$(id -u):$(id -g)" debian.img
