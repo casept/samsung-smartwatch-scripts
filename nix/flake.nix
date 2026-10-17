@@ -58,6 +58,7 @@
             pkgs.gnutls
             pkgs.elfutils
             patchedDtSchema
+            pkgs.yamllint
             pkgs.dtc
             pkgs.pahole
             pkgs.perl
