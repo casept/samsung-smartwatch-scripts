@@ -50,8 +50,8 @@ mainline-build:
 	unlink "mainline-modules/*/build" || true
 
 # Build and flash the mainline kernel (via download mode)
-mainline-download: mainline-build
-	heimdall flash --BOOT ./zImage-with-dtree
+mainline-download *flags: mainline-build
+	heimdall flash {{flags}} --BOOT ./zImage-with-dtree
 
 # Build the mainline kernel for Artik5 eval
 mainline-build-artik:
@@ -167,27 +167,83 @@ mainline-uboot-artik: mainline-uboot-artik-build
 downstream-uboot-artik: downstream-uboot-artik-build
 	./scripts/artik5-boot-u-boot.exp ./u-boot-artik/u-boot.bin
 
-# Debootstrap Debian and pack it into an ext4 image for the userdata partition
-debian:
+# Debootstrap Debian 13 (trixie) for armhf and pack it into an ext4 image for the userdata partition
+debian size="3068133376" out="debian.img": mainline-build
 	#!/usr/bin/env bash
 	set -exo pipefail
 	ROOTFS="debian-rootfs"
-	trap 'sudo rm -rf "$ROOTFS"' EXIT
-	sudo rm -rf "$ROOTFS"
+	MODULES="debian-modules"
+	trap 'sudo rm -rf "$ROOTFS" "$MODULES"' EXIT
+	sudo rm -rf "$ROOTFS" "$MODULES"
 
+	PACKAGES=(
+		openssh-server rsync systemd-timesyncd
+		# debugging and stress testing
+		stress-ng htop strace gdb linux-perf util-linux-extra python3 iperf3
+		libiio-utils i2c-tools
+		# camera, video codecs and IR (ir-ctl)
+		v4l-utils gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
+		# gstreamer1.0-plugins-bad pulls in libonnxruntime1.21, which depends on the
+		# virtual libre2-11-absl20240722 (old name of libre2-11). debootstrap's dependency
+		# resolver can't follow Provides, so the real package has to be requested explicitly.
+		libre2-11
+		# runtime dependencies of libcamera
+		libyaml-0-2 libgnutls30t64 libudev1 libevent-2.1-7t64 libevent-pthreads-2.1-7t64
+		libdrm2 libtiff6 libdw1t64 libunwind8 libegl1 libgles2
+		# GPU and display
+		kmscube glmark2-es2-drm
+		# audio
+		alsa-utils alsa-ucm-conf pipewire pipewire-bin pipewire-alsa pipewire-pulse wireplumber
+		pulseaudio-utils dbus-user-session libspa-0.2-modules
+		# WiFi and Bluetooth
+		iw wpasupplicant bluez bluez-hcidump
+		# bluez and libpam-systemd depend on the virtual default-dbus-system-bus,
+		# which debootstrap can't resolve, so request its provider explicitly.
+		dbus
+	)
 	# qemu-arm-static must be registered with binfmt_misc (F flag) for the second stage to run in the chroot
-	sudo "$(command -v debootstrap)" --arch=armhf --include=openssh-server \
+	sudo "$(command -v debootstrap)" --arch=armhf --include="$(IFS=,; echo "${PACKAGES[*]}")" \
 		trixie "$ROOTFS" http://deb.debian.org/debian
 
 	echo "root:root" | sudo chroot "$ROOTFS" chpasswd
 	echo "PermitRootLogin yes" | sudo tee "$ROOTFS/etc/ssh/sshd_config.d/root-login.conf" >/dev/null
+	sudo install -d -m 700 "$ROOTFS/root/.ssh"
+	sudo install -m 600 "$HOME/.ssh/id_ed25519.pub" "$ROOTFS/root/.ssh/authorized_keys"
 	echo "rinato" | sudo tee "$ROOTFS/etc/hostname" >/dev/null
 	echo "LABEL=debian / ext4 errors=remount-ro 0 1" | sudo tee "$ROOTFS/etc/fstab" >/dev/null
 	echo "nameserver 1.1.1.1" | sudo tee "$ROOTFS/etc/resolv.conf" >/dev/null
+	# USB gadget ethernet, the host side is 192.168.2.1 (NAT-shared for internet access)
+	printf "auto usb0\nallow-hotplug usb0\niface usb0 inet static\n    address 192.168.2.15/24\n    gateway 192.168.2.1\n" \
+		| sudo tee "$ROOTFS/etc/network/interfaces.d/usb0" >/dev/null
+	sudo chroot "$ROOTFS" systemctl enable systemd-timesyncd
 	sudo chroot "$ROOTFS" apt-get clean
 
-	rm -f debian.img
-	truncate -s 2G debian.img
+	make -C linux-samsung-smartwatch ARCH=arm CROSS_COMPILE=arm-none-eabi- \
+		INSTALL_MOD_PATH="$(pwd)/$MODULES" modules_install
+	rm -f "$MODULES"/lib/modules/*/build
+	sudo mkdir -p "$ROOTFS/usr/lib/modules"
+	sudo cp -r --no-preserve=ownership "$MODULES/lib/modules/." "$ROOTFS/usr/lib/modules/"
+
+	sudo mkdir -p "$ROOTFS/usr/lib/firmware" "$ROOTFS/usr/share/alsa/ucm2"
+	for f in firmware/rinato/*; do
+		[ "${f##*/}" = ucm2 ] && continue
+		sudo cp -r --no-preserve=ownership "$f" "$ROOTFS/usr/lib/firmware/"
+	done
+	sudo cp -r --no-preserve=ownership firmware/rinato/ucm2/. "$ROOTFS/usr/share/alsa/ucm2/"
+
+	sudo mkdir -p "$ROOTFS/var/lib/systemd/linger"
+	sudo touch "$ROOTFS/var/lib/systemd/linger/root"
+	for u in pipewire.service pipewire.socket pipewire-pulse.service pipewire-pulse.socket wireplumber.service; do
+		sudo mkdir -p "$ROOTFS/root/.config/systemd/user/$u.d"
+		printf "[Unit]\nConditionUser=\n" | sudo tee "$ROOTFS/root/.config/systemd/user/$u.d/allow-root.conf" >/dev/null
+	done
+	sudo chroot "$ROOTFS" systemctl --global enable pipewire.socket pipewire-pulse.socket wireplumber.service
+
+	rm -f "{{out}}"
+	truncate -s "{{size}}" "{{out}}"
 	# Run as root so mkfs.ext4 -d preserves file ownership from the rootfs
-	sudo mkfs.ext4 -F -L debian -d "$ROOTFS" debian.img
-	sudo chown "$(id -u):$(id -g)" debian.img
+	sudo mkfs.ext4 -F -L debian -E no_copy_xattrs -d "$ROOTFS" "{{out}}"
+	sudo chown "$(id -u):$(id -g)" "{{out}}"
+
+debian-download: debian (mainline-download "--no-reboot")
+	heimdall flash --resume --USER debian.img
